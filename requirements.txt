@@ -1,2 +1,3 @@
 streamlit
-supabase==2.3.0
+supabase
+httpx>=0.28.0
