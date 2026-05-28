@@ -9,7 +9,7 @@ import streamlit as st
 from supabase import create_client, Client
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="Perpustakaan Digital Politeknik META", page_icon="📚",
+st.set_page_config(page_title="Perpustakaan Digital", page_icon="📚",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -75,7 +75,7 @@ def halaman_login():
     st.markdown("<br>", unsafe_allow_html=True)
     _, col, _ = st.columns([1,1.2,1])
     with col:
-        st.markdown("## 📚 Perpustakaan Digital Politeknik Meta")
+        st.markdown("## 📚 Perpustakaan Digital")
         st.markdown("**Kelompok 2 — Sultan Zaki & Zulfa**")
         st.markdown("---")
         tab1, tab2 = st.tabs(["🔑 Login","📝 Daftar Akun"])
@@ -114,7 +114,7 @@ def halaman_login():
 # ── SIDEBAR ──────────────────────────────────────────────────────
 def render_sidebar():
     with st.sidebar:
-        st.markdown("## 📚 Perpustakaan PoltekMETA"); st.markdown("---")
+        st.markdown("## 📚 Perpustakaan"); st.markdown("---")
         role=st.session_state.current_role; nama=st.session_state.current_nama
         st.markdown(f"**{nama}**")
         st.markdown(f'<span class="badge-{"admin" if role=="admin" else "peminjam"}">● {role.capitalize()}</span>', unsafe_allow_html=True)
@@ -124,7 +124,8 @@ def render_sidebar():
                 ("riwayat","🕒 Semua Riwayat"),("member","👥 Data Member")]
                if role=="admin" else
                [("dashboard","🏠 Dashboard"),("buku","📖 Koleksi Buku"),("pinjam","🔖 Pinjam Buku"),
-                ("kembalikan","↩️ Kembalikan Buku"),("riwayat_saya","🕒 Riwayat Saya")])
+                ("kembalikan","↩️ Kembalikan Buku"),("riwayat_saya","🕒 Riwayat Saya"),
+                ("riwayat","📋 Semua Riwayat")])
         for key,label in menus:
             if st.button(label,key=f"nav_{key}",use_container_width=True,
                          type="primary" if st.session_state.halaman==key else "secondary"):
@@ -220,7 +221,7 @@ def hal_peminjaman_aktif():
         t=cek_terlambat(p["tgl_kembali"])
         rows.append({"ID":p["id"],"Peminjam":usr_map.get(p["username"],p["username"]),
                      "Buku":buku_map.get(p["id_buku"],""),"Tgl Pinjam":p["tgl_pinjam"],
-                     "Batas":p["tgl_kembali"],
+                     "Tgl Kembali":p["tgl_kembali"],
                      "Status":f"⚠️ Terlambat {t} hari" if t>0 else "✅ Tepat waktu",
                      "Denda":f"Rp {t*1000:,}" if t>0 else "-"})
     st.metric("Total Aktif",len(aktif))
@@ -258,7 +259,9 @@ def hal_riwayat_semua():
     usr_map={u:d["nama"] for u,d in get_users().items()}
     rows=[{"ID":p["id"],"Peminjam":usr_map.get(p["username"],p["username"]),
            "Buku":buku_map.get(p["id_buku"],""),"Tgl Pinjam":p["tgl_pinjam"],
-           "Batas":p["tgl_kembali"],"Status":"✅ Dikembalikan" if p["status"]=="dikembalikan" else "⏳ Aktif"}
+           "Batas Kembali":p["tgl_kembali"],
+           "Tgl Dikembalikan":p["tgl_dikembalikan"] if p["tgl_dikembalikan"] else "-",
+           "Status":"✅ Dikembalikan" if p["status"]=="dikembalikan" else "⏳ Aktif"}
           for p in semua]
     c1,c2=st.columns(2); c1.metric("Total",len(rows)); c2.metric("Aktif",sum(1 for r in rows if r["Status"]=="⏳ Aktif"))
     st.dataframe(rows,use_container_width=True,hide_index=True)
@@ -307,7 +310,8 @@ def hal_kembalikan():
     buku_map={b["id"]:b["judul"] for b in get_buku()}
     rows=[{"ID":p["id"],"Buku":buku_map.get(p["id_buku"],""),"Batas":p["tgl_kembali"],
            "Status":f"⚠️ Terlambat {cek_terlambat(p['tgl_kembali'])} hari" if cek_terlambat(p["tgl_kembali"])>0 else "✅ Tepat waktu",
-           "Denda":f"Rp {cek_terlambat(p['tgl_kembali'])*1000:,}" if cek_terlambat(p["tgl_kembali"])>0 else "-"} for p in milik]
+           "Denda":f"Rp {cek_terlambat(p['tgl_kembali'])*1000:,}" if cek_terlambat(p["tgl_kembali"])>0 else "-",
+           "Tgl Kembali":p["tgl_kembali"]} for p in milik]
     st.dataframe(rows,use_container_width=True,hide_index=True); st.markdown("---")
     opsi={str(p["id"]):f"{p['id']} — {buku_map.get(p['id_buku'],'')}" for p in milik}
     pid=st.selectbox("Pilih buku yang dikembalikan",list(opsi.keys()),format_func=lambda x:opsi[x])
@@ -336,7 +340,10 @@ def hal_riwayat_saya():
         status=("✅ Dikembalikan" if p["status"]=="dikembalikan"
                 else f"⚠️ Terlambat {t} hari" if t>0 else "⏳ Sedang dipinjam")
         rows.append({"ID":p["id"],"Buku":buku_map.get(p["id_buku"],""),
-                     "Tgl Pinjam":p["tgl_pinjam"],"Batas":p["tgl_kembali"],"Status":status})
+                     "Tgl Pinjam":p["tgl_pinjam"],
+                     "Tgl Kembali":p["tgl_kembali"],
+                     "Tgl Dikembalikan":p["tgl_dikembalikan"] if p["tgl_dikembalikan"] else "-",
+                     "Status":status})
     c1,c2=st.columns(2); c1.metric("Total Pinjam",len(rows))
     c2.metric("Masih Aktif",sum(1 for r in rows if "dipinjam" in r["Status"] or "Terlambat" in r["Status"]))
     st.dataframe(rows,use_container_width=True,hide_index=True)
@@ -347,7 +354,7 @@ def main():
     if not st.session_state.logged_in: halaman_login(); return
     render_sidebar()
     h=st.session_state.halaman; role=st.session_state.current_role
-    admin_only={"tambah_buku","peminjaman","pengembalian","riwayat","member"}
+    admin_only={"tambah_buku","peminjaman","pengembalian","member"}
     peminjam_only={"pinjam","kembalikan","riwayat_saya"}
     routes={"dashboard":hal_dashboard,"buku":hal_buku,"tambah_buku":hal_tambah_buku,
             "peminjaman":hal_peminjaman_aktif,"pengembalian":hal_pengembalian,
