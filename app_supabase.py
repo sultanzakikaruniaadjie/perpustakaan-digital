@@ -75,7 +75,7 @@ def halaman_login():
     st.markdown("<br>", unsafe_allow_html=True)
     _, col, _ = st.columns([1,1.2,1])
     with col:
-        st.markdown("## 📚 Perpustakaan Digital")
+        st.markdown("## 📚 Perpustakaan Digital Poltek META")
         st.markdown("**Kelompok 2 — Sultan Zaki & Zulfa**")
         st.markdown("---")
         tab1, tab2 = st.tabs(["🔑 Login","📝 Daftar Akun"])
@@ -114,7 +114,7 @@ def halaman_login():
 # ── SIDEBAR ──────────────────────────────────────────────────────
 def render_sidebar():
     with st.sidebar:
-        st.markdown("## 📚 Perpustakaan"); st.markdown("---")
+        st.markdown("## 📚 Perpustakaan Poltek META"); st.markdown("---")
         role=st.session_state.current_role; nama=st.session_state.current_nama
         st.markdown(f"**{nama}**")
         st.markdown(f'<span class="badge-{"admin" if role=="admin" else "peminjam"}">● {role.capitalize()}</span>', unsafe_allow_html=True)
