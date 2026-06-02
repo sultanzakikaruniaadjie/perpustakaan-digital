@@ -95,7 +95,7 @@ def halaman_login():
                 else:
                     st.error("❌ Username atau password salah!")
             st.markdown("---")
-            st.caption("Demo: admin/admin123  •  zaki/zaki123  •  zulfa/zulfa123")
+            st.caption("Demo: admin/admin123  •  nama/nama123  •  zulfa/zulfa123")
 
         with tab2:
             with st.form("form_daftar"):
